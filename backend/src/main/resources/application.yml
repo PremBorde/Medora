@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: medora-backend
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/medora_db}
+    username: ${SPRING_DATASOURCE_USERNAME:medora_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:medora_pass}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    open-in-view: false
+
+  ai:
+    google:
+      api-key: ${SPRING_AI_GOOGLE_API_KEY:your-gemini-api-key}
+    google-genai:
+      chat:
+        options:
+          model: gemini-2.0-flash
+          temperature: 0.3
+          max-tokens: 2048
+
+server:
+  port: ${PORT:8080}
+  error:
+    include-message: always
+    include-binding-errors: always
+
+jwt:
+  secret: ${JWT_SECRET:medora-dev-secret-key-please-change-in-production-minimum-256-bits}
+  expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+
+logging:
+  level:
+    com.medora: DEBUG
+    org.springframework.security: INFO
+    org.springframework.ai: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized

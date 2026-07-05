@@ -1,0 +1,36 @@
+# Maven / Java Build outputs
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/mvnw
+backend/mvnw.cmd
+
+# Node / Next.js Build outputs
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# Local Environment Variables & Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+frontend/.env.local
+backend/.env
+
+# IDE and Editor configs
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.settings/
+.classpath
+.project
+.factorypath
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
