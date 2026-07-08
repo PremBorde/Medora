@@ -1,4 +1,4 @@
-package com.medora.patient;
+package com.medora.patient.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

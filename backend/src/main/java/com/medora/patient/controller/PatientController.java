@@ -1,7 +1,8 @@
-package com.medora.patient;
+package com.medora.patient.controller;
 
 import com.medora.patient.dto.PatientDto;
 import com.medora.patient.dto.UpdatePatientRequest;
+import com.medora.patient.service.PatientService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

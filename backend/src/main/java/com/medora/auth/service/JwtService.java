@@ -1,4 +1,4 @@
-package com.medora.auth;
+package com.medora.auth.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

@@ -1,6 +1,8 @@
-package com.medora.patient;
+package com.medora.patient.service;
 
 import com.medora.common.exception.ResourceNotFoundException;
+import com.medora.patient.entity.Patient;
+import com.medora.patient.repository.PatientRepository;
 import com.medora.patient.dto.PatientDto;
 import com.medora.patient.dto.UpdatePatientRequest;
 import lombok.RequiredArgsConstructor;

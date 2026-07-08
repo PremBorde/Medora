@@ -9,8 +9,16 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import useAuthStore from '@/store/authStore';
 
-function Navbar() {
+function Navbar({ activeSection, scrollTo }) {
+  const { isAuthenticated } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-border/40">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 h-20 flex items-center justify-between">
@@ -28,39 +36,60 @@ function Navbar() {
         {/* Navigation Links */}
         <div className="hidden md:flex items-center gap-8">
           {[
-            { label: 'Home', active: true },
-            { label: 'Features' },
-            { label: 'How It Works' },
-            { label: 'Specialists' },
-            { label: 'About Us' },
-            { label: 'Resources' }
-          ].map((item) => (
-            <div key={item.label} className="relative py-2">
-              <span className={`text-sm font-semibold cursor-pointer transition-colors ${item.active ? 'text-[#0F5A3E]' : 'text-muted-foreground hover:text-foreground'}`}>
-                {item.label}
-              </span>
-              {item.active && (
-                <motion.div
-                  layoutId="activeNavIndicator"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0F5A3E]"
-                />
-              )}
-            </div>
-          ))}
+            { label: 'Home', id: 'home' },
+            { label: 'Features', id: 'features' },
+            { label: 'Triage Guide', id: 'triage-guide' },
+            { label: 'Safety Protocol', id: 'safety-protocol' }
+          ].map((item) => {
+            const isActive = activeSection === item.id;
+            return (
+              <div key={item.label} className="relative py-2">
+                <span
+                  onClick={() => scrollTo(item.id)}
+                  className={`text-sm font-semibold cursor-pointer transition-colors ${isActive ? 'text-[#0F5A3E]' : 'text-muted-foreground hover:text-[#0F5A3E]'}`}
+                >
+                  {item.label}
+                </span>
+                {isActive && (
+                  <motion.div
+                    layoutId="activeNavIndicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0F5A3E]"
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* Auth Actions */}
         <div className="flex items-center gap-4">
-          <Link href="/login">
-            <span className="text-sm font-bold text-[#0B3B2C] hover:text-[#0F5A3E] transition-colors cursor-pointer mr-2">
-              Sign in
-            </span>
-          </Link>
-          <Link href="/register">
-            <Button className="bg-[#0F5A3E] hover:bg-[#0B3B2C] text-white font-bold text-sm px-6 py-2.5 rounded-lg transition-all shadow-md shadow-emerald-950/10">
-              Get Started
-            </Button>
-          </Link>
+          {mounted && isAuthenticated ? (
+            <>
+              <Link href="/dashboard">
+                <span className="text-sm font-bold text-[#0B3B2C] hover:text-[#0F5A3E] transition-colors cursor-pointer mr-2">
+                  Dashboard
+                </span>
+              </Link>
+              <Link href="/symptom-check">
+                <Button className="bg-[#0F5A3E] hover:bg-[#0B3B2C] text-white font-bold text-sm px-6 py-2.5 rounded-lg transition-all shadow-md shadow-emerald-950/10">
+                  Symptom Checker
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/login">
+                <span className="text-sm font-bold text-[#0B3B2C] hover:text-[#0F5A3E] transition-colors cursor-pointer mr-2">
+                  Sign in
+                </span>
+              </Link>
+              <Link href="/register">
+                <Button className="bg-[#0F5A3E] hover:bg-[#0B3B2C] text-white font-bold text-sm px-6 py-2.5 rounded-lg transition-all shadow-md shadow-emerald-950/10">
+                  Get Started
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>
@@ -75,22 +104,41 @@ const urgencyLevels = [
 ];
 
 export default function LandingPage() {
-  const [isIntroActive, setIsIntroActive] = useState(true);
+  const [activeSection, setActiveSection] = useState('home');
 
-  // Lock body scroll when intro is active to prevent peeking content
   useEffect(() => {
-    if (isIntroActive) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isIntroActive]);
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + 150;
+      
+      const features = document.getElementById('features');
+      const triage = document.getElementById('triage-guide');
+      const safety = document.getElementById('safety-protocol');
 
-  const handleEnterSite = () => {
-    setIsIntroActive(false);
+      if (safety && scrollPosition >= safety.offsetTop) {
+        setActiveSection('safety-protocol');
+      } else if (triage && scrollPosition >= triage.offsetTop) {
+        setActiveSection('triage-guide');
+      } else if (features && scrollPosition >= features.offsetTop) {
+        setActiveSection('features');
+      } else {
+        setActiveSection('home');
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollTo = (id) => {
+    if (id === 'home') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      const el = document.getElementById(id);
+      if (el) {
+        const offset = el.offsetTop - 100;
+        window.scrollTo({ top: offset, behavior: 'smooth' });
+      }
+    }
   };
 
   // Scroll reveal variants
@@ -101,42 +149,7 @@ export default function LandingPage() {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[#FAFCFB]">
-      {/* Fullscreen Video Intro Stage */}
-      <AnimatePresence>
-        {isIntroActive && (
-          <motion.div
-            initial={{ y: 0 }}
-            exit={{ y: '-100%' }}
-            transition={{ duration: 1.0, ease: [0.76, 0, 0.24, 1] }}
-            className="fixed top-0 left-0 w-screen h-screen z-[9999] bg-black flex items-center justify-center overflow-hidden"
-          >
-            <video
-              autoPlay
-              muted
-              playsInline
-              onEnded={handleEnterSite}
-              className="absolute inset-0 w-full h-full object-cover"
-            >
-              <source src="/intro.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-
-            {/* Skip Intro button */}
-            <div className="absolute bottom-10 right-10 z-20">
-              <Button
-                variant="ghost"
-                onClick={handleEnterSite}
-                className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md font-semibold text-xs px-5 py-3 rounded-full flex items-center gap-2 transition-all cursor-pointer"
-              >
-                Skip Intro
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <Navbar />
+      <Navbar activeSection={activeSection} scrollTo={scrollTo} />
 
       {/* Hero Section */}
       <main className="relative pt-32 pb-8 px-6 lg:px-8 max-w-7xl mx-auto">
@@ -222,7 +235,7 @@ export default function LandingPage() {
         </div>
 
         {/* Feature Cards Grid (Bottom of Hero) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-16">
+        <div id="features" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-16">
           {/* Card 1: Symptom Check (Active card matching mockup) */}
           <div className="bg-white border border-border/60 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
             <div className="flex gap-4">
@@ -305,6 +318,7 @@ export default function LandingPage() {
         
         {/* Section 1: Urgency Assessment Guidance */}
         <motion.section
+          id="triage-guide"
           variants={revealVariants}
           initial="hidden"
           whileInView="visible"
@@ -352,6 +366,7 @@ export default function LandingPage() {
 
         {/* Section 2: Clinical Protocol active */}
         <motion.section
+          id="safety-protocol"
           variants={revealVariants}
           initial="hidden"
           whileInView="visible"

@@ -1,7 +1,8 @@
-package com.medora.symptom;
+package com.medora.symptom.controller;
 
 import com.medora.symptom.dto.SymptomRequest;
 import com.medora.symptom.dto.SymptomResponse;
+import com.medora.symptom.service.SymptomService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

@@ -1,5 +1,6 @@
-package com.medora.auth;
+package com.medora.auth.filter;
 
+import com.medora.auth.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

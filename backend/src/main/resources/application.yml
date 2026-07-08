@@ -3,9 +3,9 @@ spring:
     name: medora-backend
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/medora_db}
-    username: ${SPRING_DATASOURCE_USERNAME:medora_user}
-    password: ${SPRING_DATASOURCE_PASSWORD:medora_pass}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/Medora}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -24,13 +24,13 @@ spring:
 
   ai:
     google:
-      api-key: ${SPRING_AI_GOOGLE_API_KEY:your-gemini-api-key}
-    google-genai:
-      chat:
-        options:
-          model: gemini-2.0-flash
-          temperature: 0.3
-          max-tokens: 2048
+      genai:
+        api-key: ${SPRING_AI_GOOGLE_API_KEY:your-gemini-api-key}
+        chat:
+          options:
+            model: gemini-2.0-flash
+            temperature: 0.3
+            max-tokens: 2048
 
 server:
   port: ${PORT:8080}

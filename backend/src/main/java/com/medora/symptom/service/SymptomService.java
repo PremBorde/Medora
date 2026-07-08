@@ -1,4 +1,4 @@
-package com.medora.symptom;
+package com.medora.symptom.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.medora.symptom.dto.SymptomRequest;

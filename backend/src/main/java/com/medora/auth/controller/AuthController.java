@@ -1,8 +1,9 @@
-package com.medora.auth;
+package com.medora.auth.controller;
 
 import com.medora.auth.dto.JwtResponse;
 import com.medora.auth.dto.LoginRequest;
 import com.medora.auth.dto.RegisterRequest;
+import com.medora.auth.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

@@ -1,11 +1,11 @@
-package com.medora.auth;
+package com.medora.auth.service;
 
 import com.medora.auth.dto.JwtResponse;
 import com.medora.auth.dto.LoginRequest;
 import com.medora.auth.dto.RegisterRequest;
 import com.medora.common.exception.ConflictException;
-import com.medora.patient.Patient;
-import com.medora.patient.PatientRepository;
+import com.medora.patient.entity.Patient;
+import com.medora.patient.repository.PatientRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
