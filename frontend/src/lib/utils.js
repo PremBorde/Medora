@@ -25,6 +25,40 @@ export function formatDate(date) {
  */
 export function getUrgencyConfig(urgencyLevel) {
   const configs = {
+    // ── New urgency scale (symptom-checker) ──
+    HOME_CARE: {
+      label: 'Home Care',
+      color: 'text-emerald-700',
+      bg: 'bg-emerald-50',
+      border: 'border-emerald-200',
+      badge: 'urgency-home-care',
+      icon: '✓',
+    },
+    ROUTINE: {
+      label: 'Routine',
+      color: 'text-sky-700',
+      bg: 'bg-sky-50',
+      border: 'border-sky-200',
+      badge: 'urgency-routine',
+      icon: '🕐',
+    },
+    URGENT: {
+      label: 'Urgent',
+      color: 'text-amber-700',
+      bg: 'bg-amber-50',
+      border: 'border-amber-200',
+      badge: 'urgency-urgent',
+      icon: '!!',
+    },
+    EMERGENCY: {
+      label: 'Emergency',
+      color: 'text-red-700',
+      bg: 'bg-red-50',
+      border: 'border-red-200',
+      badge: 'urgency-emergency',
+      icon: '🚨',
+    },
+    // ── Legacy scale (original symptom-check page) ──
     LOW: {
       label: 'Low',
       color: 'text-emerald-700',
@@ -49,16 +83,8 @@ export function getUrgencyConfig(urgencyLevel) {
       badge: 'urgency-high',
       icon: '!!',
     },
-    EMERGENCY: {
-      label: 'Emergency',
-      color: 'text-red-700',
-      bg: 'bg-red-50',
-      border: 'border-red-200',
-      badge: 'urgency-emergency',
-      icon: '🚨',
-    },
   };
-  return configs[urgencyLevel] || configs.MEDIUM;
+  return configs[urgencyLevel] || configs.ROUTINE;
 }
 
 /**

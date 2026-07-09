@@ -13,5 +13,8 @@ public record SymptomRequest(
         String gender,
         List<String> knownConditions,
         List<String> currentMedications,
-        String additionalContext
+        String additionalContext,
+
+        /** Optional body-map region selected by the user (e.g. "chest", "head"). */
+        String bodyLocation
 ) {}

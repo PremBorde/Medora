@@ -7,7 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   Stethoscope, Send, AlertTriangle, CheckCircle,
-  Info, ArrowRight, RefreshCw, Shield, Sparkles, User, FileText, Heart, Activity, CheckCircle2, ChevronRight
+  Info, ArrowRight, RefreshCw, Shield, Sparkles, User, FileText, Heart, Activity, CheckCircle2, ChevronRight,
+  AlertCircle,
 } from 'lucide-react';
 import { symptomApi } from '@/lib/api';
 import Link from 'next/link';
@@ -43,14 +44,18 @@ function LoadingDots() {
 }
 
 function UrgencyMeter({ currentLevel }) {
-  const levels = ['LOW', 'MEDIUM', 'HIGH', 'EMERGENCY'];
+  const levels = ['HOME_CARE', 'ROUTINE', 'URGENT', 'EMERGENCY'];
   const getLevelColor = (lvl) => {
     switch (lvl) {
-      case 'LOW': return 'bg-emerald-500';
-      case 'MEDIUM': return 'bg-amber-500';
-      case 'HIGH': return 'bg-orange-500';
+      case 'HOME_CARE': return 'bg-emerald-500';
+      case 'ROUTINE':   return 'bg-sky-500';
+      case 'URGENT':    return 'bg-amber-500';
       case 'EMERGENCY': return 'bg-red-500';
-      default: return 'bg-muted';
+      // Legacy labels kept for forward-compat
+      case 'LOW':       return 'bg-emerald-500';
+      case 'MEDIUM':    return 'bg-amber-500';
+      case 'HIGH':      return 'bg-orange-500';
+      default:          return 'bg-muted';
     }
   };
 
@@ -71,7 +76,7 @@ function UrgencyMeter({ currentLevel }) {
                 } ${isActive ? 'ring-2 ring-offset-2 ring-primary/20 shadow-lg' : ''}`}
               />
               <span className={`block text-center text-[9px] font-bold tracking-tight ${isActive ? 'text-foreground' : 'text-muted-foreground/60'}`}>
-                {lvl}
+                {lvl.replace('_', '\u00a0')}
               </span>
             </div>
           );

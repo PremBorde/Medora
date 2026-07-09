@@ -11,6 +11,7 @@ import {
   Heart,
   LogOut,
   Activity,
+  MapPin,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import useAuthStore from '@/store/authStore';
@@ -25,6 +26,12 @@ const navItems = [
     label: 'Symptom Check',
     href: '/symptom-check',
     icon: Stethoscope,
+  },
+  {
+    label: 'Symptom Checker',
+    href: '/symptom-checker',
+    icon: MapPin,
+    badge: 'New',
   },
   {
     label: 'Health Timeline',
@@ -105,6 +112,11 @@ export default function Sidebar() {
                       )}
                     />
                     <span className="flex-1">{item.label}</span>
+                    {item.badge && !isActive && (
+                      <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-full px-1.5 py-0.5 font-bold">
+                        {item.badge}
+                      </span>
+                    )}
                     {isActive && (
                       <motion.div
                         layoutId="sidebar-active"
