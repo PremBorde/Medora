@@ -1,6 +1,6 @@
 # 🩺 Medora AI
 
-> **AI-First Healthcare Navigation Platform** — Empowering patients to understand their symptoms, receive clinical urgency recommendations, find appropriate specialists, and prepare for medical consultations safely.
+> **AI-First Healthcare Navigation Platform** — Empowering patients to understand their symptoms, receive clinical urgency recommendations, find appropriate specialists, upload/summarize medical reports, and track their health over time.
 
 ---
 
@@ -29,10 +29,10 @@ sequenceDiagram
     Note over BE: Verify JWT & Patient Authority
     Note over BE: Render Prompt Template (symptom-analysis.st)
     BE->>Gemini: Send structured prompt via ChatClient
-    Gemini-->>BE: Return raw JSON markdown response
-    Note over BE: Sanitize JSON, deserialize to DTO, enforce Emergency Triage Safety
+    Gemini-->>BE: Return raw JSON response
+    Note over BE: Enforce Emergency Triage Safety & Create Timeline Log
     BE-->>FE: Return SymptomResponse DTO
-    FE->>Patient: Render interactive urgency, reasoning, specialists, & safety warnings
+    FE->>Patient: Render urgency, specialists & map navigation CTA
 ```
 
 ---
@@ -41,10 +41,10 @@ sequenceDiagram
 
 | Layer | Technologies & Libraries |
 | :--- | :--- |
-| **Frontend** | Next.js 15 (App Router), React, Tailwind CSS, Shadcn UI, Framer Motion, Axios, Zustand |
-| **Backend** | Spring Boot 3.3.5, Spring Security 6 (Stateless JWT), Spring AI 1.1.8 (Google GenAI integration) |
+| **Frontend** | Next.js 15 (App Router), React, Tailwind CSS, Shadcn UI, Framer Motion, Axios, Zustand, Google Maps Javascript API |
+| **Backend** | Spring Boot 3.3.5, Spring Security 6 (Stateless JWT), Spring AI 1.1.8 (Google GenAI integration), Hibernate JPA |
 | **Database** | PostgreSQL 16 (with `pgvector` for future RAG), Hibernate JPA |
-| **Model** | Gemini 2.0 Flash |
+| **Model** | Gemini 2.0 Flash (Multimodal context parsing) |
 
 ---
 
@@ -53,6 +53,13 @@ sequenceDiagram
 ```
 d:\Medora AI\
 ├── frontend/          # Next.js 15 App Router
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── care-map/    # Hospital list and Google Maps navigation route
+│   │   │   ├── reports/     # Medical Report summarization & upload dropzones
+│   │   │   ├── timeline/    # Patient health chronological feed
+│   │   │   └── dashboard/   # Dashboard links & analytics tracking
+│   │   └── components/
 ├── backend/           # Spring Boot 3.x + Spring AI
 │   ├── src/
 │   │   ├── main/
@@ -61,6 +68,8 @@ d:\Medora AI\
 │   │   │   │   ├── common/     # Global exceptions and API responders
 │   │   │   │   ├── config/     # Security, CORS, and Spring AI beans
 │   │   │   │   ├── patient/    # Patient profile entities and JPA repositories
+│   │   │   │   ├── report/     # Medical reports entities, Gemini OCR, and controllers
+│   │   │   │   ├── timeline/   # Chronological log events services & controllers
 │   │   │   │   └── symptom/    # AI Symptom Checker endpoints and Prompt services
 │   │   │   └── resources/
 │   │   │       ├── prompts/    # LLM Triage instructions
@@ -75,58 +84,47 @@ d:\Medora AI\
 
 ## 🚀 Setup & Launch Guide
 
-### 1. Database Setup (Choose Option A or B)
+### 1. Database Setup
+Ensure PostgreSQL is running locally on port `5432` with a database named `Medora`. If using Docker:
+```bash
+docker compose up -d
+```
 
-#### Option A: Local PostgreSQL (Without Docker)
-1. Ensure your local PostgreSQL service is running on port `5432`.
-2. Connect to it using your favorite database editor (pgAdmin, DBeaver, etc.) and create a database named `Medora`:
-   ```sql
-   CREATE DATABASE "Medora";
-   ```
-   *Note: Default database fallback values in `application.yml` are set to connect with username `postgres` and password `root`.*
+### 2. Configuration Setup
+Create an `.env` file in the root directory and add the following keys:
+```env
+# Google Gemini API key
+SPRING_AI_GOOGLE_API_KEY=your_gemini_key
 
-#### Option B: Containerized PostgreSQL & Redis (With Docker)
-1. Start the containerized services from the root folder:
-   ```bash
-   docker compose up -d
-   ```
+# Google Maps API key
+NEXT_PUBLIC_GOOGLE_MAPS_KEY=your_google_maps_key
+```
 
----
+### 3. Backend Launch
+From the `backend/` directory, run the Maven wrapper:
+```powershell
+# Windows PowerShell
+.\mvnw clean spring-boot:run
+```
+* Health Endpoint: [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health)
+* Swagger Documentation: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
 
-### 2. Backend Launch
-From the `backend/` directory:
-1. Ensure you have the `SPRING_AI_GOOGLE_API_KEY` defined (e.g. from the root `.env` file).
-2. Run the application:
-   ```powershell
-   .\mvnw clean spring-boot:run
-   ```
-3. Verify the server is running by hitting the health check endpoint:
-   👉 [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health) (Should return `{"status":"UP"}`)
-4. Access interactive API documentation:
-   👉 **[http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)**
-
----
-
-### 3. Frontend Launch
-From the `frontend/` directory:
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-2. Start the Next.js development server:
-   ```bash
-   npm run dev
-   ```
-3. Open your browser to [http://localhost:3000](http://localhost:3000).
+### 4. Frontend Launch
+From the `frontend/` directory, install dependencies and start the Next.js development server:
+```bash
+npm install
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
 ## 🛠️ Key Bugfixes & Audit Log
 
-During our recent project audit, we completed several critical adjustments:
+* **Spring Security 6 CORS Preflight Fix:** Converted the `CorsFilter` bean to a `CorsConfigurationSource` to prevent preflight blocks (`OPTIONS` errors) in the frontend.
+* **Spring AI ChatClient Integration:** Introduced `AiConfig.java` which instantiates `ChatClient` using the auto-configured builder.
+* **Smart Care Map Module:** Integrated Google Maps, directions polylines, segmented filter chips, interactive detail drawers, and emergency call overlays. Includes automatic zoom mapping (`fitBounds`) and viewport memory leak cleanups.
+* **Multimodal Report Summarization (Phase 2):** Created file upload zones utilizing Google Gemini 2.0 to perform OCR on medical reports, highlighting High/Low laboratory results.
+* **Chronological Health Timeline (Phase 2):** Integrated vertical timeline tracks tracking auto-generated symptom assessments, reports uploads, and manually logged milestones.
+* **Profile Layout Audit:** Redesigned the Patient Health Profile page into a balanced side-by-side grid, separating Personal Demographics and Clinical Context on desktop viewports.
 
-* **Spring Security 6 CORS Preflight Fix:** Converted the `CorsFilter` bean to a `CorsConfigurationSource` and explicitly integrated it into the Spring Security Filter Chain using `.cors(Customizer.withDefaults())` to prevent preflight blocks (`OPTIONS` errors) in the frontend.
-* **Spring AI ChatClient Integration:** Resolved the missing `ChatClient` bean definition error by introducing [AiConfig.java](file:///d:/Medora%20AI/backend/src/main/java/com/medora/config/AiConfig.java) which instantiates `ChatClient` using the auto-configured builder.
-* **Windows Maven Wrapper escape bug:** Patched `mvnw.cmd` to automatically strip trailing backslashes from path variables, resolving command goal truncation errors.
-* **Target JVM Compatibility:** Configured the maven compiler options to compile targeting **Java 17** to match the active host runtime environment, preventing `UnsupportedClassVersionError` crashes.
-* **Landing Page Clean Up:** Streamlined navigation links to match functional routes (Home, Features, Triage Guide, Safety Protocol), implemented automatic active section highlighting on scroll, and removed the video intro sequence.
