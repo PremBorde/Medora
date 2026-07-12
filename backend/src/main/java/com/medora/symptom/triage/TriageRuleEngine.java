@@ -29,9 +29,9 @@ public class TriageRuleEngine {
             Pattern.compile("\\bchest\\s+pain\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern CARDIAC_ASSOCIATED =
             Pattern.compile(
-                    "shortness of breath|difficulty breathing|can'?t breathe|" +
-                    "left arm|jaw pain|sweating|nausea|pressure in chest|" +
-                    "tightness in chest|crushing",
+                    "shortness of breath|difficulty breathing|can'?t breathe|breathless|" +
+                    "left arm|jaw pain|back pain|radiat|sweating|nausea|pressure in chest|" +
+                    "tightness in chest|crushing|dizz|faint",
                     Pattern.CASE_INSENSITIVE);
 
     // Rule 2 — Thunderclap / SAH headache
@@ -45,7 +45,8 @@ public class TriageRuleEngine {
     // Rule 3 — Stroke signs (FAST)
     private static final Pattern STROKE_SIGNS =
             Pattern.compile(
-                    "one.?sided weakness|facial droop|face drooping|face drooped|" +
+                    "one.?sided weakness|weakness\\s+on\\s+one\\s+side|" +
+                    "facial\\s+droop|face\\s+(?:is\\s+)?droop(?:ing|ed)|" +
                     "slurred speech|arm weakness|leg weakness|" +
                     "sudden numbness|sudden confusion|sudden trouble speaking|" +
                     "sudden vision loss|sudden severe dizziness",

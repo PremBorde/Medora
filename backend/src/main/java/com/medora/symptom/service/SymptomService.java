@@ -56,7 +56,10 @@ public class SymptomService {
                                              : "None",
                     "bodyLocation",      request.bodyLocation() != null
                                              ? request.bodyLocation()
-                                             : "Not specified"
+                                             : "Not specified",
+                    "clarificationRound", request.clarificationRound() != null
+                                             ? request.clarificationRound().toString()
+                                             : "0"
             ));
 
             // ----------------------------------------------------------------
@@ -87,27 +90,90 @@ public class SymptomService {
             }
             mergedRedFlags.addAll(triageResult.reasons());
 
+            // Force ASSESSMENT_COMPLETE if we hit max rounds limit
+            String finalResponseType = llmResponse.responseType();
+            if ("CLARIFICATION_NEEDED".equals(finalResponseType) && request.clarificationRound() != null && request.clarificationRound() >= 2) {
+                finalResponseType = "ASSESSMENT_COMPLETE";
+            }
+
             // Force EMERGENCY if rule engine fired, regardless of LLM output
             String finalUrgency = triageResult.triggered()
                     ? "EMERGENCY"
-                    : llmResponse.urgencyLevel();
+                    : (llmResponse.urgencyLevel() != null ? llmResponse.urgencyLevel() : "ROUTINE");
 
             boolean seekImmediateCare = "EMERGENCY".equals(finalUrgency);
 
+            String finalSummary = llmResponse.simpleSummary() != null
+                    ? llmResponse.simpleSummary()
+                    : (llmResponse.question() != null ? llmResponse.question() : "Please review the guidance below.");
+
+            String finalDetail = llmResponse.clinicalDetail() != null
+                    ? llmResponse.clinicalDetail()
+                    : "Assessment compiled after clarification.";
+
+            String finalBasisLine = null;
+            if ("ASSESSMENT_COMPLETE".equals(finalResponseType)) {
+                if (triageResult.triggered()) {
+                    List<String> matchedDetails = new ArrayList<>();
+                    String input = (request.symptoms() + " " + (request.bodyLocation() != null ? request.bodyLocation() : "") + " " + (request.additionalContext() != null ? request.additionalContext() : "")).toLowerCase();
+                    if (input.contains("chest")) {
+                        matchedDetails.add("chest pain");
+                        if (input.contains("sweat")) matchedDetails.add("sweating");
+                        if (input.contains("breath") || input.contains("shortness")) matchedDetails.add("breathlessness");
+                        if (input.contains("arm")) matchedDetails.add("left arm pain");
+                        if (input.contains("jaw")) matchedDetails.add("jaw pain");
+                        if (input.contains("back")) matchedDetails.add("back pain");
+                        if (input.contains("pressure") || input.contains("crush") || input.contains("tight")) matchedDetails.add("chest pressure/tightness");
+                    } else if (input.contains("headache")) {
+                        matchedDetails.add("severe headache");
+                    } else if (input.contains("bleed")) {
+                        matchedDetails.add("uncontrolled bleeding");
+                    } else if (input.contains("conscious") || input.contains("pass") || input.contains("faint") || input.contains("unrespons")) {
+                        matchedDetails.add("loss of consciousness");
+                    } else if (input.contains("allerg") || input.contains("anaphyl") || input.contains("throat")) {
+                        matchedDetails.add("anaphylaxis/throat swelling");
+                    } else if (input.contains("fever") || input.contains("temp")) {
+                        matchedDetails.add("infant high fever");
+                    }
+                    if (matchedDetails.isEmpty()) {
+                        matchedDetails.addAll(triageResult.reasons());
+                    }
+                    finalBasisLine = "Flagged due to: " + String.join(" + ", matchedDetails);
+                } else {
+                    finalBasisLine = llmResponse.basisLine();
+                }
+            }
+
             return new SymptomResponse(
                     finalUrgency,
-                    llmResponse.reasoning(),
+                    finalSummary,
+                    finalDetail,
                     List.copyOf(mergedRedFlags),
-                    llmResponse.recommendedAction(),
-                    llmResponse.specialistType(),
+                    llmResponse.recommendedAction() != null ? llmResponse.recommendedAction() : "Seek general medical checkup.",
+                    llmResponse.specialistType() != null ? llmResponse.specialistType() : "General Physician",
                     llmResponse.homeCareSteps() != null ? llmResponse.homeCareSteps() : List.of(),
                     seekImmediateCare,
-                    DISCLAIMER
+                    DISCLAIMER,
+                    finalBasisLine,
+
+                    // Clarification fields
+                    finalResponseType != null ? finalResponseType : "ASSESSMENT_COMPLETE",
+                    llmResponse.question(),
+                    llmResponse.questionType(),
+                    llmResponse.parentRegion(),
+                    llmResponse.subRegions(),
+                    llmResponse.minSeverity(),
+                    llmResponse.maxSeverity(),
+                    llmResponse.minLabel(),
+                    llmResponse.maxLabel(),
+                    llmResponse.quickReplyOptions(),
+                    llmResponse.iconOptions(),
+                    llmResponse.placeholder()
             );
 
         } catch (Exception e) {
             log.error("Error analyzing symptoms: {}", e.getMessage(), e);
-            return fallbackResponse();
+            return fallbackResponse(e);
         }
     }
 
@@ -134,20 +200,29 @@ public class SymptomService {
             log.error("Error explaining metric: {}", e.getMessage(), e);
             return new com.medora.symptom.dto.ExplainResponse(
                     String.format("Your %s of %s represents a baseline indicator of your logged health metrics.",
-                            request.metricName(), request.value()),
+                             request.metricName(), request.value()),
                     DISCLAIMER
             );
         }
+    }
+
+    public String testDirectGemini() {
+        return chatClient.prompt()
+                .user("Say hello back in exactly 3 words")
+                .call()
+                .content();
     }
 
     // -----------------------------------------------------------------------
     // Private helpers
     // -----------------------------------------------------------------------
 
-    private SymptomResponse fallbackResponse() {
+    private SymptomResponse fallbackResponse(Exception e) {
+        String errorDetail = e != null ? (e.getClass().getSimpleName() + ": " + e.getMessage()) : "Unknown error";
         return new SymptomResponse(
                 "URGENT",
-                "Unable to fully analyse symptoms at this time. Please consult a healthcare professional.",
+                "We weren't able to complete your analysis right now. Please try again in a moment.",
+                "Backend Error: " + errorDetail,
                 List.of(),
                 "Seek medical attention as soon as possible given the inability to complete automated analysis.",
                 "General Physician",
@@ -157,7 +232,11 @@ public class SymptomService {
                         "Seek medical advice if symptoms worsen."
                 ),
                 false,
-                DISCLAIMER
+                DISCLAIMER,
+                "Error fallback",
+
+                "ASSESSMENT_COMPLETE",
+                null, null, null, null, null, null, null, null, null, null, null
         );
     }
 }

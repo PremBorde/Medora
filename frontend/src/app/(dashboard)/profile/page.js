@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
-import { User, Save, CheckCircle, AlertCircle, Heart, ShieldAlert, Sparkles } from 'lucide-react';
+import { User, Save, CheckCircle, AlertCircle, Heart, ShieldAlert, Sparkles, Info } from 'lucide-react';
 import { patientApi } from '@/lib/api';
 import { getErrorMessage } from '@/lib/utils';
 import useAuthStore from '@/store/authStore';
@@ -48,7 +48,7 @@ function FieldGroup({ label, error, children }) {
 }
 
 export default function ProfilePage() {
-  const { user, updateUser } = useAuthStore();
+  const { user, updateUser, logout } = useAuthStore();
   const router = useRouter();
   const [saveStatus, setSaveStatus] = useState(null); // 'success' | 'error'
   const [isLoading, setIsLoading] = useState(false);
@@ -104,7 +104,7 @@ export default function ProfilePage() {
       {/* Grid overlay */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808006_1px,transparent_1px),linear-gradient(to_bottom,#80808006_1px,transparent_1px)] bg-[size:16px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_80%,transparent_100%)] pointer-events-none" />
 
-      <div className="relative z-10 max-w-2xl mx-auto space-y-8">
+      <div className="relative z-10 max-w-6xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shadow-sm">
@@ -133,140 +133,200 @@ export default function ProfilePage() {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Personal Info */}
-          <SpotlightCard>
-            <div className="p-6 sm:p-8 space-y-6">
-              <div>
-                <h3 className="text-base font-bold font-display text-foreground flex items-center gap-2">
-                  <User className="w-4.5 h-4.5 text-primary" />
-                  Personal Demographics
-                </h3>
-                <p className="text-xs text-muted-foreground mt-1">Configure age, gender, and physical baselines.</p>
-              </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Column: Personal Info & App Preferences */}
+            <div className="lg:col-span-7 space-y-6">
+              <SpotlightCard>
+                <div className="p-6 sm:p-8 space-y-6">
+                  <div>
+                    <h3 className="text-base font-bold font-display text-foreground flex items-center gap-2">
+                      <User className="w-4.5 h-4.5 text-primary" />
+                      Personal Demographics
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1">Configure age, gender, and physical baselines.</p>
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-border/40 pt-5">
-                <FieldGroup label="First Name" error={errors.firstName?.message}>
-                  <Input {...register('firstName')} error={!!errors.firstName} className="bg-white/50 border-border/85" />
-                </FieldGroup>
-                <FieldGroup label="Last Name" error={errors.lastName?.message}>
-                  <Input {...register('lastName')} error={!!errors.lastName} className="bg-white/50 border-border/85" />
-                </FieldGroup>
-                <FieldGroup label="Phone Number">
-                  <Input {...register('phoneNumber')} type="tel" placeholder="+1 (555) 000-0000" className="bg-white/50 border-border/85" />
-                </FieldGroup>
-                <FieldGroup label="Date of Birth">
-                  <Input {...register('dateOfBirth')} type="date" className="bg-white/50 border-border/85" />
-                </FieldGroup>
-                <FieldGroup label="Gender">
-                  <select
-                    {...register('gender')}
-                    className="w-full bg-white/50 border border-border/85 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-transparent transition-all"
-                  >
-                    <option value="">Select gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Non-binary">Non-binary</option>
-                    <option value="Prefer not to say">Prefer not to say</option>
-                  </select>
-                </FieldGroup>
-                <FieldGroup label="Blood Type">
-                  <select
-                    {...register('bloodType')}
-                    className="w-full bg-white/50 border border-border/85 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-transparent transition-all"
-                  >
-                    <option value="">Unknown</option>
-                    {['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </FieldGroup>
-                <FieldGroup label="Height (cm)">
-                  <Input {...register('heightCm')} type="number" placeholder="175" step="0.1" className="bg-white/50 border-border/85" />
-                </FieldGroup>
-                <FieldGroup label="Weight (kg)">
-                  <Input {...register('weightKg')} type="number" placeholder="70" step="0.1" className="bg-white/50 border-border/85" />
-                </FieldGroup>
-              </div>
-            </div>
-          </SpotlightCard>
-
-          {/* Medical History */}
-          <SpotlightCard>
-            <div className="p-6 sm:p-8 space-y-6">
-              <div>
-                <h3 className="text-base font-bold font-display text-foreground flex items-center gap-2">
-                  <Heart className="w-4.5 h-4.5 text-danger animate-pulse" />
-                  Clinical Context & History
-                </h3>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Enter baseline conditions to personalize the diagnostic reasoning weights.
-                </p>
-              </div>
-
-              <div className="space-y-4 border-t border-border/40 pt-5">
-                <FieldGroup label="Known Allergies">
-                  <Textarea
-                    {...register('allergies')}
-                    placeholder="e.g., Penicillin, Peanuts, Latex"
-                    className="min-h-[80px] bg-white/50 border-border/85"
-                  />
-                </FieldGroup>
-                <FieldGroup label="Chronic Conditions">
-                  <Textarea
-                    {...register('chronicConditions')}
-                    placeholder="e.g., Type 2 Diabetes, Hypertension, Asthma"
-                    className="min-h-[80px] bg-white/50 border-border/85"
-                  />
-                </FieldGroup>
-                <FieldGroup label="Current Medications">
-                  <Textarea
-                    {...register('currentMedications')}
-                    placeholder="e.g., Metformin 500mg, Lisinopril 10mg"
-                    className="min-h-[80px] bg-white/50 border-border/85"
-                  />
-                </FieldGroup>
-              </div>
-            </div>
-          </SpotlightCard>
-
-          {/* System Settings & Onboarding */}
-          <SpotlightCard>
-            <div className="p-6 sm:p-8 space-y-6">
-              <div>
-                <h3 className="text-base font-bold font-display text-foreground flex items-center gap-2">
-                  <Sparkles className="w-4.5 h-4.5 text-primary" />
-                  App Preferences
-                </h3>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Manage interactive onboarding sessions and preferences.
-                </p>
-              </div>
-
-              <div className="border-t border-border/40 pt-5 flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold text-foreground">Guided Onboarding Tour</h4>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Reset the onboarding prompts on the dashboard.</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-border/40 pt-5">
+                    <FieldGroup label="First Name" error={errors.firstName?.message}>
+                      <Input {...register('firstName')} error={!!errors.firstName} className="bg-white/50 border-border/85" />
+                    </FieldGroup>
+                    <FieldGroup label="Last Name" error={errors.lastName?.message}>
+                      <Input {...register('lastName')} error={!!errors.lastName} className="bg-white/50 border-border/85" />
+                    </FieldGroup>
+                    <FieldGroup label="Phone Number">
+                      <Input {...register('phoneNumber')} type="tel" placeholder="+1 (555) 000-0000" className="bg-white/50 border-border/85" />
+                    </FieldGroup>
+                    <FieldGroup label="Date of Birth">
+                      <Input {...register('dateOfBirth')} type="date" className="bg-white/50 border-border/85" />
+                    </FieldGroup>
+                    <FieldGroup label="Gender">
+                      <select
+                        {...register('gender')}
+                        className="w-full bg-white/50 border border-border/85 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-transparent transition-all"
+                      >
+                        <option value="">Select gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Non-binary">Non-binary</option>
+                        <option value="Prefer not to say">Prefer not to say</option>
+                      </select>
+                    </FieldGroup>
+                    <FieldGroup label="Blood Type">
+                      <select
+                        {...register('bloodType')}
+                        className="w-full bg-white/50 border border-border/85 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-transparent transition-all"
+                      >
+                        <option value="">Unknown</option>
+                        {['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(t => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </FieldGroup>
+                    <FieldGroup label="Height (cm)">
+                      <Input {...register('heightCm')} type="number" placeholder="175" step="0.1" className="bg-white/50 border-border/85" />
+                    </FieldGroup>
+                    <FieldGroup label="Weight (kg)">
+                      <Input {...register('weightKg')} type="number" placeholder="70" step="0.1" className="bg-white/50 border-border/85" />
+                    </FieldGroup>
+                  </div>
                 </div>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={async () => {
-                    try {
-                      const response = await patientApi.updateMe({ hasSeenTour: false });
-                      updateUser(response.data);
-                      router.push('/dashboard');
-                    } catch (err) {
-                      console.error("Failed to reset tour state", err);
-                    }
-                  }}
-                  className="border-border/80 bg-white/60 hover:bg-muted font-bold text-xs"
-                >
-                  Replay Tour
-                </Button>
+              </SpotlightCard>
+
+              {/* System Settings & Onboarding */}
+              <SpotlightCard>
+                <div className="p-6 sm:p-8 space-y-6">
+                  <div>
+                    <h3 className="text-base font-bold font-display text-foreground flex items-center gap-2">
+                      <Sparkles className="w-4.5 h-4.5 text-primary" />
+                      App Preferences
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Manage interactive onboarding sessions and preferences.
+                    </p>
+                  </div>
+
+                  <div className="border-t border-border/40 pt-5 flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold text-foreground">Guided Onboarding Tour</h4>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">Reset onboarding prompts.</p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          const response = await patientApi.updateMe({ hasSeenTour: false });
+                          updateUser(response.data);
+                          router.push('/dashboard');
+                        } catch (err) {
+                          console.error("Failed to reset tour state", err);
+                        }
+                      }}
+                      className="border-border/80 bg-white/60 hover:bg-muted font-bold text-xs shrink-0"
+                    >
+                      Replay Tour
+                    </Button>
+                  </div>
+
+                  <div className="border-t border-border/40 pt-5 flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold text-foreground">Account Session</h4>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">Sign out of Medora AI.</p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="danger"
+                      size="sm"
+                      onClick={() => {
+                        logout();
+                        router.push('/login');
+                      }}
+                      className="font-bold text-xs shrink-0"
+                    >
+                      Sign Out
+                    </Button>
+                  </div>
+                </div>
+              </SpotlightCard>
+            </div>
+
+            {/* Right Column: Medical History & AI Telemetry Info */}
+            <div className="lg:col-span-5 space-y-6">
+              {/* Medical History */}
+              <SpotlightCard>
+                <div className="p-6 sm:p-8 space-y-6">
+                  <div>
+                    <h3 className="text-base font-bold font-display text-foreground flex items-center gap-2">
+                      <Heart className="w-4.5 h-4.5 text-danger animate-pulse" />
+                      Clinical Context & History
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Enter baseline conditions to personalize the diagnostic reasoning weights.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4 border-t border-border/40 pt-5">
+                    <FieldGroup label="Known Allergies">
+                      <Textarea
+                        {...register('allergies')}
+                        placeholder="e.g., Penicillin, Peanuts, Latex"
+                        className="min-h-[60px] bg-white/50 border-border/85 resize-none"
+                      />
+                    </FieldGroup>
+                    <FieldGroup label="Chronic Conditions">
+                      <Textarea
+                        {...register('chronicConditions')}
+                        placeholder="e.g., Type 2 Diabetes, Hypertension, Asthma"
+                        className="min-h-[60px] bg-white/50 border-border/85 resize-none"
+                      />
+                    </FieldGroup>
+                    <FieldGroup label="Current Medications">
+                      <Textarea
+                        {...register('currentMedications')}
+                        placeholder="e.g., Metformin 500mg, Lisinopril 10mg"
+                        className="min-h-[60px] bg-white/50 border-border/85 resize-none"
+                      />
+                    </FieldGroup>
+                  </div>
+                </div>
+              </SpotlightCard>
+
+              {/* AI Telemetry Guidance Card */}
+              <div className="rounded-2xl border border-border bg-white p-6 space-y-4 shadow-sm">
+                <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5 font-display">
+                  <Info className="w-4.5 h-4.5 text-primary shrink-0" />
+                  AI Telemetry Guidance
+                </h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  How Medora AI uses these metrics to personalize your health guidance safely:
+                </p>
+                <div className="space-y-3.5 text-[11px] font-semibold text-muted-foreground leading-relaxed">
+                  <div className="flex gap-2.5 items-start">
+                    <span className="w-4.5 h-4.5 rounded-lg bg-primary-50 text-primary font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+                    <div>
+                      <p className="text-foreground font-bold">Allergies & Medications</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Restricts recommended provider listings and alerts you against contraindicating options.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2.5 items-start">
+                    <span className="w-4.5 h-4.5 rounded-lg bg-primary-50 text-primary font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+                    <div>
+                      <p className="text-foreground font-bold">Age & Physical Baselines</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Customizes symptom assessment triage limits (e.g. pediatric alerts vs senior risk calculations).</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2.5 items-start">
+                    <span className="w-4.5 h-4.5 rounded-lg bg-primary-50 text-primary font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
+                    <div>
+                      <p className="text-foreground font-bold">Chronic Tracking</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Informs the Care Map matching algorithm to suggest clinics with relevant specialized support.</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </SpotlightCard>
+          </div>
 
           {/* Save Action bar */}
           <div className="flex items-center justify-between gap-4 p-4 bg-white/40 border border-border/60 backdrop-blur-md rounded-2xl">

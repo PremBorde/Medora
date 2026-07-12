@@ -408,40 +408,38 @@ export default function DashboardPage() {
               </Link>
 
               {/* Phase 2: Report OCR */}
-              <div className="opacity-75 border border-border/80 bg-white p-5 rounded-2xl flex gap-4 relative overflow-hidden shadow-sm">
-                <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground shrink-0">
-                  <FileText className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-bold font-display text-sm text-foreground">Report Summarizer</h4>
-                    <span className="text-[9px] bg-primary/10 text-primary border border-primary/20 rounded-full px-2 py-0.5 font-bold uppercase tracking-wider scale-90">
-                      Phase 2
-                    </span>
+              <Link href="/reports" className="block">
+                <SpotlightCard className="p-5 cursor-pointer group hover:border-accent/30 transition-all shadow-sm">
+                  <div className="flex gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-white transition-all shrink-0">
+                      <FileText className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold font-display text-sm text-foreground group-hover:text-accent transition-colors">Report Summarizer</h4>
+                      <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                        Convert lab documents, imaging studies, and results using OCR.
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-                    Convert lab documents, imaging studies, and results using OCR.
-                  </p>
-                </div>
-              </div>
+                </SpotlightCard>
+              </Link>
 
               {/* Phase 2: Timeline */}
-              <div className="opacity-75 border border-border/80 bg-white p-5 rounded-2xl flex gap-4 relative overflow-hidden shadow-sm">
-                <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground shrink-0">
-                  <Clock className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-bold font-display text-sm text-foreground">Health Timeline</h4>
-                    <span className="text-[9px] bg-primary/10 text-primary border border-primary/20 rounded-full px-2 py-0.5 font-bold uppercase tracking-wider scale-90">
-                      Phase 2
-                    </span>
+              <Link href="/timeline" className="block">
+                <SpotlightCard className="p-5 cursor-pointer group hover:border-accent/30 transition-all shadow-sm">
+                  <div className="flex gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-white transition-all shrink-0">
+                      <Clock className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold font-display text-sm text-foreground group-hover:text-accent transition-colors">Health Timeline</h4>
+                      <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                        Graph chronological updates of logged diagnostic evaluations.
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-                    Graph chronological updates of logged diagnostic evaluations.
-                  </p>
-                </div>
-              </div>
+                </SpotlightCard>
+              </Link>
             </div>
           </div>
 

@@ -27,11 +27,11 @@ class TriageRuleEngineTest {
     // Helper builder — avoids positional constructor noise
     // -------------------------------------------------------------------------
     private static SymptomRequest req(String symptoms) {
-        return new SymptomRequest(symptoms, null, null, null, null, null, null);
+        return new SymptomRequest(symptoms, null, null, null, null, null, null, null);
     }
 
     private static SymptomRequest req(String symptoms, Integer age, String bodyLocation) {
-        return new SymptomRequest(symptoms, age, null, null, null, null, bodyLocation);
+        return new SymptomRequest(symptoms, age, null, null, null, null, bodyLocation, null);
     }
 
     // =========================================================================
@@ -273,6 +273,84 @@ class TriageRuleEngineTest {
             var result = engine.evaluate(req(
                     "I've been feeling very tired for the past two weeks and my mood has been low."));
             assertClean(result);
+        }
+    }
+
+    // =========================================================================
+    // JACKSON DESERIALIZATION TEST
+    // =========================================================================
+
+    @Nested
+    @DisplayName("Jackson deserialization compatibility")
+    class JacksonDeserialization {
+
+        @Test
+        @DisplayName("Deserialize JSON with new simpleSummary + clinicalDetail fields")
+        void testDeserializationWithMissingFields() throws Exception {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            String json = """
+                {
+                  "urgencyLevel": "HOME_CARE",
+                  "simpleSummary": "You seem to be feeling mild discomfort that should pass with rest.",
+                  "clinicalDetail": "The reported symptoms are consistent with mild indigestion or transient gastrointestinal upset.",
+                  "basisLine": "Flagged due to: test description",
+                  "redFlags": [],
+                  "recommendedAction": "Rest at home",
+                  "specialistType": "General Physician",
+                  "homeCareSteps": ["Drink water", "Sleep"]
+                }
+                """;
+            com.medora.symptom.dto.SymptomResponse response = mapper.readValue(json, com.medora.symptom.dto.SymptomResponse.class);
+            assertThat(response).isNotNull();
+            assertThat(response.urgencyLevel()).isEqualTo("HOME_CARE");
+            assertThat(response.simpleSummary()).isEqualTo("You seem to be feeling mild discomfort that should pass with rest.");
+            assertThat(response.clinicalDetail()).contains("indigestion");
+            assertThat(response.basisLine()).isEqualTo("Flagged due to: test description");
+            assertThat(response.seekImmediateCare()).isFalse(); // defaulted by Jackson/JVM for primitive boolean
+            assertThat(response.disclaimer()).isNull(); // defaulted to null
+        }
+
+        @Test
+        @DisplayName("Test prompt template rendering with placeholders")
+        void testPromptTemplateRendering() throws Exception {
+            org.springframework.core.io.ClassPathResource resource = new org.springframework.core.io.ClassPathResource("prompts/symptom-analysis.st");
+            assertThat(resource.exists()).isTrue();
+            
+            // Read content
+            java.io.InputStream in = resource.getInputStream();
+            byte[] bytes = in.readAllBytes();
+            String content = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+            
+            org.springframework.ai.chat.prompt.PromptTemplate template = new org.springframework.ai.chat.prompt.PromptTemplate(content);
+            String rendered = template.render(java.util.Map.of(
+                "symptoms", "test symptoms description",
+                "age", "30",
+                "gender", "Male",
+                "knownConditions", "None",
+                "medications", "None",
+                "additionalContext", "None",
+                "bodyLocation", "head"
+            ));
+            assertThat(rendered).contains("test symptoms description");
+            assertThat(rendered).contains("head");
+        }
+
+        @Test
+        @DisplayName("Diagnose network connectivity to Gemini API")
+        void testGeminiApiNetworkReachability() {
+            String host = "generativelanguage.googleapis.com";
+            int port = 443;
+            int timeoutMs = 5000;
+            
+            try (java.net.Socket socket = new java.net.Socket()) {
+                System.out.println("Attempting TCP connection to " + host + ":" + port + "...");
+                socket.connect(new java.net.InetSocketAddress(host, port), timeoutMs);
+                System.out.println("Successfully connected to " + host + "!");
+                assertThat(socket.isConnected()).isTrue();
+            } catch (Exception e) {
+                System.err.println("CRITICAL: Cannot connect to Gemini API host: " + e.getClass().getName() + " -> " + e.getMessage());
+                // Do not fail the build, just print the diagnostic warning
+            }
         }
     }
 

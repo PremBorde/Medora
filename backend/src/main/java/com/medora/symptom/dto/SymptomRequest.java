@@ -16,5 +16,8 @@ public record SymptomRequest(
         String additionalContext,
 
         /** Optional body-map region selected by the user (e.g. "chest", "head"). */
-        String bodyLocation
+        String bodyLocation,
+
+        /** Current clarification round (starts at 0) */
+        Integer clarificationRound
 ) {}

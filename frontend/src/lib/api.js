@@ -23,11 +23,12 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor — handle 401
+// Response interceptor — handle 401 and 403 (unauthorized/forbidden)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    if (status === 401 || status === 403) {
       clearToken();
       if (typeof window !== 'undefined') {
         window.location.href = '/login';
